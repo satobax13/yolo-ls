@@ -1,0 +1,4 @@
+label-studio-sdk
+ultralytics
+opencv-python
+numpy

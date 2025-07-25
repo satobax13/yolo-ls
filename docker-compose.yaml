@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  label-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: label-studio
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./label-studio-data:/label-studio/data
+      - ./yolo_auto_label:/yolo_auto_label
+      - ./models:/models
+    environment:
+      - LABEL_STUDIO_HOST=http://localhost:8080
+      - LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED=true
+      - LABEL_STUDIO_LOCAL_FILES_DOCUMENT_ROOT=/label-studio/files
+      - LABEL_STUDIO_PASSWORD=12345
+      - LABEL_STUDIO_USERNAME=default_user@localhost
+    restart: unless-stopped
+
