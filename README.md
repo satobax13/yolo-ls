@@ -41,17 +41,17 @@ docker compose up -d
 
 #### Список объектов, которые YOLOv8 может определить:
 person, bicycle, car, motorcycle, airplane, bus, train, truck,
-boat, traffic, light, fire, hydrant, stop, sign, parking, meter,
+boat, traffic light, fire hydrant, stop sign, parking meter,
 bench, bird, cat, dog, horse, sheep, cow, elephant, bear, zebra,
 giraffe, backpack, umbrella, handbag, tie, suitcase, frisbee, skis,
-snowboard, sports, ball, kite, baseball, bat, baseball, glove,
-skateboard, surfboard, tennis, racket, bottle, wine, glass, cup,
+snowboard, sports ball, kite, baseball bat, baseball glove,
+skateboard, surfboard, tennis racket, bottle, wine glass, cup,
 fork, knife, spoon, bowl, banana, apple, sandwich, orange,
-broccoli, carrot, hot, dog, pizza, donut, cake, chair, couch,
-potted, plant, bed, dining, table, toilet, tv, laptop, mouse,
-remote, keyboard, cell, phone, microwave, oven, toaster, sink,
-refrigerator, book, clock, vase, scissors, teddy, bear, hair,
-drier, toothbrush
+broccoli, carrot, hot dog, pizza, donut, cake, chair, couch,
+potted plant, bed, dining table, toilet, tv, laptop, mouse,
+remote, keyboard, cell phone, microwave, oven, toaster, sink,
+refrigerator, book, clock, vase, scissors, teddy bear, hair drier,
+toothbrush
 
 6. **Сохраняем**
 
@@ -64,7 +64,7 @@ drier, toothbrush
 1. Открываем консоль и вводим следующую команду:
 
 
-docker exec -e API_KEY=<Ваш ключ API> -e PROJECT_NAME=<Имя проекта> -e YOLO_MODEL=<Имя модели> -e UPLOAD_AS_ANNOTATIONS=<True or False> label-studio python -W ignore /yolo_auto_label/example_run.py
+docker exec -e API_KEY=<Ваш ключ API> -e PROJECT_NAME=<Имя проекта> -e YOLO_MODEL=<Имя модели> -e UPLOAD_AS_ANNOTATIONS=<True или False> label-studio python -W ignore /yolo_auto_label/example_run.py
 
 - **API_KEY** - Ваш скопированный API-ключ
 - **PROJECT_NAME** - Имя проекта, для которого будет произведена аннотация
