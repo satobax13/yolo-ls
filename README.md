@@ -9,7 +9,7 @@
 2. Запустите контейнер в папке **yolo-ls**:
 
 
-    '''docker compose up -d'''
+docker compose up -d
 
 3. Подождите, пока установится образ и все зависимости для среды
 
@@ -19,10 +19,8 @@
 
 1. Необходимо перейти в [Label Studio](http://localhost:8080/) по http://localhost:8080/ и авторизоваться:
 
-'''
     Логин: default_user@localhost
     Пароль: 12345
-'''
 
 2. Создаем проект, называем его
 
@@ -66,7 +64,7 @@ drier, toothbrush
 1. Открываем консоль и вводим следующую команду:
 
 
-    '''docker exec -e API_KEY=<Ваш ключ API> -e PROJECT_NAME=<Имя проекта> -e YOLO_MODEL=<Имя модели> -e UPLOAD_AS_ANNOTATIONS=<True or False> label-studio python -W ignore /yolo_auto_label/example_run.py'''
+docker exec -e API_KEY=<Ваш ключ API> -e PROJECT_NAME=<Имя проекта> -e YOLO_MODEL=<Имя модели> -e UPLOAD_AS_ANNOTATIONS=<True or False> label-studio python -W ignore /yolo_auto_label/example_run.py
 
 - **API_KEY** - Ваш скопированный API-ключ
 - **PROJECT_NAME** - Имя проекта, для которого будет произведена аннотация
