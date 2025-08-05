@@ -1,17 +1,12 @@
-version: '3.8'
-
 services:
   label-studio:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: heartexlabs/label-studio:latest
     container_name: label-studio
     ports:
       - "8080:8080"
     volumes:
       - ./label-studio-data:/label-studio/data
-      - ./yolo_auto_label:/yolo_auto_label
-      - ./models:/models
+      - ./tasks:/label-studio/files
     environment:
       - LABEL_STUDIO_HOST=http://localhost:8080
       - LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED=true
@@ -19,4 +14,15 @@ services:
       - LABEL_STUDIO_PASSWORD=12345
       - LABEL_STUDIO_USERNAME=default_user@localhost
     restart: unless-stopped
+
+  yolo-env:
+    build: ./yolo_auto_label
+    container_name: yolo-env
+    volumes:
+      - ./yolo_auto_label:/yolo_auto_label
+      - ./models:/models
+      - ./tasks:/tasks
+    working_dir: /yolo_auto_label
+    command: tail -f /dev/null
+
 
