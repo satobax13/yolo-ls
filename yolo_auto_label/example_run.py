@@ -1,12 +1,14 @@
 from YoloClassAutolabel import YoloAutoLabel
 from pathlib import Path
-import os
+import yaml
 
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
 
-API_KEY = os.getenv("API_KEY")
-MODEL_NAME = os.getenv("YOLO_MODEL", "yolov8n.pt")
-PROJECT_NAME = os.getenv("PROJECT_NAME")
-UPLOAD_AS_ANNOTATIONS = os.getenv("UPLOAD_AS_ANNOTATIONS", 'false').lower() == "true"
+API_KEY = config["api_key"]
+MODEL_NAME = config["model_name"]
+PROJECT_NAME = config["project_name"]
+UPLOAD_AS_ANNOTATIONS = config["upload_as_annotations"]
 
 LABEL_STUDIO_URL = "http://localhost:8080"
 
@@ -16,7 +18,8 @@ def main():
     auto_label = YoloAutoLabel(
         label_studio_url=LABEL_STUDIO_URL,
         ls_api_key=API_KEY,
-        yolo_model_path= str(Path(__file__).parent.parent / "models" / MODEL_NAME)
+        yolo_model_path= str(Path(__file__).parent.parent / "models" / MODEL_NAME),
+        host_local_storage_path='/yolo/'
     )
     # Запуск обработки
     auto_label.run(project_name=PROJECT_NAME, upload_as_annotations=UPLOAD_AS_ANNOTATIONS)

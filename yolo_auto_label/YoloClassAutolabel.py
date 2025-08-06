@@ -4,6 +4,7 @@ import cv2
 from typing import List, Dict, Optional, Tuple
 from ultralytics.engine.results import Results
 import logging
+from pathlib import Path
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
@@ -113,9 +114,15 @@ class YoloAutoLabel:
         raise ValueError(f'Проект с именем {name} не найден')
 
     def _get_local_storage(self, project_id: int):
-        self.client.import_storage.local.create(project=project_id, path=self.host_local_storage_path, use_blob_urls=True)
+        """
 
-        storage_id = self.client.import_storage.local.list(project=1)[-1].project
+        :param project_id:
+        :return:
+        """
+        path = '/label-studio/files' + self.host_local_storage_path
+        self.client.import_storage.local.create(project=project_id, path=path, use_blob_urls=True)
+
+        storage_id = self.client.import_storage.local.list(project=project_id)[-1].id
 
         self.client.import_storage.local.sync(id=storage_id)
 
@@ -179,35 +186,31 @@ class YoloAutoLabel:
         :param path: Путь к local storage внутри docker
         :return: Путь к local storage на хосте
         """
-        new_path = path.replace('/data', '/label-studio/data/media', 1)
+        new_path = 'tasks' + path[path.find('=') + 1:]
         return new_path
 
-
-    def _yolo_predict(self, path_to_image: str, classes_to_predict: List):
+    def _yolo_predict(self, image: str, classes_to_predict: List):
         """
         Выполняет предсказание YOLO для изображения
 
-        :param path_to_image: Путь к изображению
+        :param image: Путь к изображению
         :param classes_to_predict: Список классов, которые нужно определить
         :return: Результаты предсказания
-        :raises: FileNotFoundError, RuntimeError
+        :raises: RuntimeError
         """
         try:
-            return self.model.predict(path_to_image, classes=classes_to_predict)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Изображение не найдено: {path_to_image}")
+            return self.model.predict(image, classes=classes_to_predict)
         except Exception as e:
             raise RuntimeError(f"Ошибка предсказания YOLO: {str(e)}")
 
 
     @staticmethod
-    def _get_image_size(image_path) -> Dict[str, int]:
+    def _get_image_size(image) -> Dict[str, int]:
         """
         Возвращает размеры изображения (ширину и высоту)
-        :param image_path: Путь к изображению
+        :param image: Изображение
         :return:
         """
-        image = cv2.imread(image_path)
         height, width = image.shape[:2]
 
         return {"height": height, "width": width}
@@ -229,6 +232,9 @@ class YoloAutoLabel:
         project_id = self._get_project(project_name)
         logger.info(f"Получен ID проекта: {project_id}")
 
+        # Создаем и синхронизируем локальное хранилище
+        self._get_local_storage(project_id)
+
         # Получение задач
         tasks = self._get_tasks(project_id)
         logger.info(f"Найдено задач: {len(tasks)}")
@@ -242,11 +248,16 @@ class YoloAutoLabel:
             
             # Подготовка изображения
             task_path = self._change_path(task_path)
-            
-            image_sizes = self._get_image_size(task_path)
+
+            try:
+                image = cv2.imread(task_path)
+            except FileNotFoundError:
+                raise FileNotFoundError(f"Изображение не найдено: {task_path}")
+
+            image_sizes = self._get_image_size(image)
 
             # Получение предсказаний
-            predictions = self._yolo_predict(task_path, classes_to_predict)
+            predictions = self._yolo_predict(image, classes_to_predict)
             
             # Обработка bbox
             bbox_classes_scores = Bbox.from_yolo_results(predictions)
