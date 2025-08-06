@@ -9,8 +9,9 @@ API_KEY = config["api_key"]
 MODEL_NAME = config["model_name"]
 PROJECT_NAME = config["project_name"]
 UPLOAD_AS_ANNOTATIONS = config["upload_as_annotations"]
+HOST_LOCAL_STORAGE = config["host_local_storage_path"]
+LABEL_STUDIO_URL = "http://label-studio:8080"
 
-LABEL_STUDIO_URL = "http://localhost:8080"
 
 
 def main():
@@ -19,7 +20,7 @@ def main():
         label_studio_url=LABEL_STUDIO_URL,
         ls_api_key=API_KEY,
         yolo_model_path= str(Path(__file__).parent.parent / "models" / MODEL_NAME),
-        host_local_storage_path='/yolo/'
+        host_local_storage_path=HOST_LOCAL_STORAGE
     )
     # Запуск обработки
     auto_label.run(project_name=PROJECT_NAME, upload_as_annotations=UPLOAD_AS_ANNOTATIONS)

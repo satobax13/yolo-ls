@@ -4,7 +4,6 @@ import cv2
 from typing import List, Dict, Optional, Tuple
 from ultralytics.engine.results import Results
 import logging
-from pathlib import Path
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
@@ -186,7 +185,7 @@ class YoloAutoLabel:
         :param path: Путь к local storage внутри docker
         :return: Путь к local storage на хосте
         """
-        new_path = 'tasks' + path[path.find('=') + 1:]
+        new_path = '/tasks/' + path[path.find('=') + 1:]
         return new_path
 
     def _yolo_predict(self, image: str, classes_to_predict: List):
