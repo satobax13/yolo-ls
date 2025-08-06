@@ -1,0 +1,4 @@
+api_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6ODA2MTYzMjgwNCwiaWF0IjoxNzU0NDMyODA0LCJqdGkiOiJkZGQ4NzQxZTIyYjM0YmYwYjc2MGJmZjY0ZWVmZTkwYiIsInVzZXJfaWQiOjF9.A6XJr4keQ34tgLZGJ4Ou3TTwjEFzTqA2Npev5oP-V8s"
+model_name: "yolov8n.pt"
+project_name: "yolo_proj"
+upload_as_annotations: False
