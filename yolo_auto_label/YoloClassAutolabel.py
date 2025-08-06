@@ -10,6 +10,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
+# Добавление логов в файл
+log_file = "logs/auto_label.log"
+fh = logging.FileHandler(log_file, encoding='utf-8')
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
 # Вывод в консоль
 ch = logging.StreamHandler()
 ch.setFormatter(formatter)
