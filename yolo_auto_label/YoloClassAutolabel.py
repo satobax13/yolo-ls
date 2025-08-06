@@ -85,13 +85,14 @@ class Bbox:
 
 class YoloAutoLabel:
 
-    def __init__(self, label_studio_url: str, ls_api_key: str, yolo_model_path: str):
+    def __init__(self, label_studio_url: str, ls_api_key: str, yolo_model_path: str, host_local_storage_path: str):
         """
         :param label_studio_url: URL сервера Label Studio
         :param yolo_model_path: Путь к модели YOLO
         :param ls_api_key: API ключ Label Studio
         """
         self.client = LabelStudio(api_key=ls_api_key, base_url=label_studio_url)
+        self.host_local_storage_path = host_local_storage_path
         self.yolo_model_path = yolo_model_path
         self.model = YOLO(self.yolo_model_path)
         # Словарь для смены местами названия и ID классов YOLO
@@ -111,6 +112,12 @@ class YoloAutoLabel:
                 return project.id
         raise ValueError(f'Проект с именем {name} не найден')
 
+    def _get_local_storage(self, project_id: int):
+        self.client.import_storage.local.create(project=project_id, path=self.host_local_storage_path, use_blob_urls=True)
+
+        storage_id = self.client.import_storage.local.list(project=1)[-1].project
+
+        self.client.import_storage.local.sync(id=storage_id)
 
     def _labels_check(self, project_id: int) -> List[int]:
         """
