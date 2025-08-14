@@ -125,7 +125,8 @@ class YoloAutoLabel:
         :param project_id:
         :return:
         """
-        path = str(Path(__file__).parent.parent.parent.parent.parent.parent / "label_studio" / "files" / "tasks")
+        logger.info(str(Path(__file__).resolve()))
+        path = str(Path(__file__).parents[5] / "label_studio" / "files" / "tasks") + "/"
         logger.info(f"Путь хранилища {path}")
 
         self.client.import_storage.local.create(project=project_id, path=path, use_blob_urls=True)
@@ -241,11 +242,8 @@ class YoloAutoLabel:
         logger.info(f"Получен ID проекта: {project_id}")
 
         # Создаем и синхронизируем локальное хранилище
-        try:
-            self._get_local_storage(project_id)
-            logger.info(f"Хранилище синхронизировано")
-        except:
-            logger.info(f"Ошибка синхронизации храналища")
+        self._get_local_storage(project_id)
+
 
         # Получение задач
         tasks = self._get_tasks(project_id)
