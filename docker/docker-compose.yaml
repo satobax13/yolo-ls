@@ -5,8 +5,8 @@ services:
    ports:
      - "8080:8080"
    volumes:
-     - ./label-studio-data:/label-studio/data
-     - ./label_studio_files/tasks:/label-studio/files
+     - ../label-studio-data:/label-studio/data
+     - ../label_studio_files/tasks:/label-studio/files
    environment:
      - LABEL_STUDIO_HOST=http://localhost:8080
      - LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED=true

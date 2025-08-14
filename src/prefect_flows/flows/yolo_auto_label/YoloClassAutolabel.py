@@ -126,7 +126,7 @@ class YoloAutoLabel:
         :return:
         """
         logger.info(str(Path(__file__).resolve()))
-        path = str(Path(__file__).parents[5] / "label_studio" / "files" / "tasks") + "/"
+        path = "/label-studio/files/" + self.host_local_storage_path
         logger.info(f"Путь хранилища {path}")
 
         self.client.import_storage.local.create(project=project_id, path=path, use_blob_urls=True)
@@ -195,7 +195,8 @@ class YoloAutoLabel:
         :param path: Путь к local storage внутри docker
         :return: Путь к local storage на хосте
         """
-        new_path = '/tasks/' + path[path.find('=') + 1:]
+        logger.info(str(path[path.find('=') + 1:]))
+        new_path = "/label_studio/files/tasks/" + path[path.find('=') + 1:]
         return new_path
 
     def _yolo_predict(self, image: str, classes_to_predict: List):
