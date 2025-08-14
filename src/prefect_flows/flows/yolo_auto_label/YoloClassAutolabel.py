@@ -4,6 +4,7 @@ import cv2
 from typing import List, Dict, Optional, Tuple
 from ultralytics.engine.results import Results
 import logging
+from pathlib import Path
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
@@ -11,10 +12,10 @@ logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Добавление логов в файл
-log_file = "logs/auto_label.log"
-fh = logging.FileHandler(log_file, encoding='utf-8')
-fh.setFormatter(formatter)
-logger.addHandler(fh)
+# log_file = "logs/auto_label.log"
+# fh = logging.FileHandler(log_file, encoding='utf-8')
+# fh.setFormatter(formatter)
+# logger.addHandler(fh)
 
 # Вывод в консоль
 ch = logging.StreamHandler()
@@ -124,7 +125,9 @@ class YoloAutoLabel:
         :param project_id:
         :return:
         """
-        path = '/label-studio/files' + self.host_local_storage_path
+        path = str(Path(__file__).parent.parent.parent.parent.parent.parent / "label_studio" / "files" / "tasks")
+        logger.info(f"Путь хранилища {path}")
+
         self.client.import_storage.local.create(project=project_id, path=path, use_blob_urls=True)
 
         storage_id = self.client.import_storage.local.list(project=project_id)[-1].id
@@ -238,7 +241,11 @@ class YoloAutoLabel:
         logger.info(f"Получен ID проекта: {project_id}")
 
         # Создаем и синхронизируем локальное хранилище
-        self._get_local_storage(project_id)
+        try:
+            self._get_local_storage(project_id)
+            logger.info(f"Хранилище синхронизировано")
+        except:
+            logger.info(f"Ошибка синхронизации храналища")
 
         # Получение задач
         tasks = self._get_tasks(project_id)

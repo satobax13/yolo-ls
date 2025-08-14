@@ -1,5 +1,0 @@
-api_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6ODA2MTY5ODgyMywiaWF0IjoxNzU0NDk4ODIzLCJqdGkiOiJlMDI0MGNkYzI3MmY0MjU5YjAwZDRmYmJlNDQ0OGVmZCIsInVzZXJfaWQiOjF9.lZ1R4p4A7lM24jXMcpfDWhF0zRpUlDs0COUi7l12V3M"
-model_name: "yolov8s.pt"
-project_name: "yolo_proj"
-upload_as_annotations: True
-host_local_storage_path: '/yolo/'
