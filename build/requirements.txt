@@ -1,4 +1,4 @@
-label-studio-sdk
-ultralytics
-opencv-python
-numpy
+label-studio-sdk==2.0.1
+ultralytics==8.3.174
+opencv-python==4.12.0.88
+numpy==2.2.6

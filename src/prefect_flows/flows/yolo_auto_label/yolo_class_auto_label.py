@@ -3,24 +3,8 @@ from ultralytics import YOLO
 import cv2
 from typing import List, Dict, Optional, Tuple
 from ultralytics.engine.results import Results
-import logging
-from pathlib import Path
+from prefect import get_run_logger
 
-# Настройка логгера
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# Добавление логов в файл
-# log_file = "logs/auto_label.log"
-# fh = logging.FileHandler(log_file, encoding='utf-8')
-# fh.setFormatter(formatter)
-# logger.addHandler(fh)
-
-# Вывод в консоль
-ch = logging.StreamHandler()
-ch.setFormatter(formatter)
-logger.addHandler(ch)
 
 class Bbox:
 
@@ -100,10 +84,15 @@ class YoloAutoLabel:
         """
         self.client = LabelStudio(api_key=ls_api_key, base_url=label_studio_url)
         self.host_local_storage_path = host_local_storage_path
-        self.yolo_model_path = yolo_model_path
+        self.yolo_model_path = "/label_studio/files/models/" + yolo_model_path
         self.model = YOLO(self.yolo_model_path)
         # Словарь для смены местами названия и ID классов YOLO
         self.name_to_id = {name: id for id, name in self.model.names.items()}
+
+
+    @property
+    def logger(self):
+        return get_run_logger()
 
 
     def _get_project(self, name: str) -> Optional[int]:
@@ -125,19 +114,24 @@ class YoloAutoLabel:
         :param project_id:
         :return:
         """
-        logger.info(str(Path(__file__).resolve()))
-        path = "/label-studio/files/" + self.host_local_storage_path
-        logger.info(f"Путь хранилища {path}")
+        path = "/label-studio/files" + self.host_local_storage_path
+        self.logger.info(f"Путь к локальному хранилищу: {path}")
+        if self.client.import_storage.local.list(project=project_id)[-1].id:
+            self.logger.info(f"Хранилище для проекта существует, синхронизируем")
+            storage_id = self.client.import_storage.local.list(project=project_id)[-1].id
+            self.logger.info(f"Айди хранилища: {storage_id}")
+            self.client.import_storage.local.sync(id=storage_id)
+        else:
+            self.logger.info(f"Создаем локальное хранилище для проекта")
+            self.client.import_storage.local.create(project=project_id, path=path, use_blob_urls=True)
+            storage_id = self.client.import_storage.local.list(project=project_id)[-1].id
+            self.logger.info(f"Айди хранилища: {storage_id}")
+            self.client.import_storage.local.sync(id=storage_id)
 
-        self.client.import_storage.local.create(project=project_id, path=path, use_blob_urls=True)
-
-        storage_id = self.client.import_storage.local.list(project=project_id)[-1].id
-
-        self.client.import_storage.local.sync(id=storage_id)
 
     def _labels_check(self, project_id: int) -> List[int]:
         """
-        Проверяет, содержит ли проект классы, проверяет подходят ли они для заданной модели YOLO.
+        Проверяет, содержит ли проект классы, проверяет, подходят ли они для заданной модели YOLO.
         Возвращает список идентификаторов классов для YOLO, которые есть и в проекте LS.
 
         :param project_id: ID проекта
@@ -165,37 +159,51 @@ class YoloAutoLabel:
             raise ValueError('В проекте отсутствуют необходимые классы для YOLO')
             
         unmatched_values = set(projects_labels) - set(model_label_values)
-        logger.info(f"Неподходящие классы для YOLO: {', '.join(unmatched_values)}")
+        self.logger.info(f"Неподходящие классы для YOLO: {', '.join(unmatched_values)}")
         
         return labels_for_yolo
     
     
 
-    def _get_tasks(self, project_id: int) -> List[Tuple[str, int]]:
+    def _get_tasks(self, project_id: int, upload_as_annotations: bool) -> List[Tuple[str, int]]:
         """
         Получаем пути к изображениям в задании и ID задания по ID проекта
         :param project_id: ID проекта
         :return: Возвращает список с кортежами (Путь к изображению в задании, ID задания)
-        :raise ValueError: Если в проекте нет заданий
+        :raise ValueError: Если в проекте нет заданий или задания размечены
         """
         task_ls = self.client.tasks.list(
             project=project_id
         )
-        
-        if not task_ls.items:
-            raise ValueError(f'Отсутствуют задания в проекте')
-            
-        return [(task.data['image'], task.id) for task in task_ls.items]
 
-    @staticmethod
-    def _change_path(path) -> str:
+        if not task_ls:
+            raise ValueError(f'Отсутствуют задания в проекте')
+
+        tasks = []
+
+        if upload_as_annotations:
+            for task in task_ls.items:
+                if not self.client.tasks.get(id=task.id).total_annotations:
+                    tasks.append((task.data['image'], task.id))
+        else:
+            for task in task_ls.items:
+                if not self.client.tasks.get(id=task.id).total_predictions:
+                    tasks.append((task.data['image'], task.id))
+
+        if not tasks:
+            raise ValueError(f'Все задания размечены')
+
+        return tasks
+
+
+    def _change_path(self, path) -> str:
         """
         Изменения пути local storage внутри docker на local storage на хосте, который использует Label Studio
 
         :param path: Путь к local storage внутри docker
         :return: Путь к local storage на хосте
         """
-        logger.info(str(path[path.find('=') + 1:]))
+        self.logger.info("Путь к файлу: " + str(path[path.find('=') + 1:]))
         new_path = "/label_studio/files/tasks/" + path[path.find('=') + 1:]
         return new_path
 
@@ -235,27 +243,27 @@ class YoloAutoLabel:
         """        
         print("\n\n\n", flush=True)
 
-        logger.info(f"Начало обработки проекта: {project_name}")
-        logger.info(f"Режим загрузки: {'annotations' if upload_as_annotations else 'predictions'}")
+        self.logger.info(f"Начало обработки проекта: {project_name}")
+        self.logger.info(f"Режим загрузки: {'annotations' if upload_as_annotations else 'predictions'}")
 
         # Получение ID проекта
         project_id = self._get_project(project_name)
-        logger.info(f"Получен ID проекта: {project_id}")
+        self.logger.info(f"Получен ID проекта: {project_id}")
 
         # Создаем и синхронизируем локальное хранилище
         self._get_local_storage(project_id)
-
+        self.logger.info(f"Хранилище успешно синхронизировано")
 
         # Получение задач
-        tasks = self._get_tasks(project_id)
-        logger.info(f"Найдено задач: {len(tasks)}")
+        tasks = self._get_tasks(project_id, upload_as_annotations)
+        self.logger.info(f"Найдено задач: {len(tasks)}")
 
         # Проверка классов
         classes_to_predict = self._labels_check(project_id)
-        logger.info(f"Классы для предсказания: {', '.join([self.model.names[classes] for classes in classes_to_predict])}")
+        self.logger.info(f"Классы для предсказания: {', '.join([self.model.names[classes] for classes in classes_to_predict])}")
 
         for task_path, task_id in tasks:
-            logger.info(f"Обработка задачи {task_id} (файл: {task_path})")
+            self.logger.info(f"Обработка задачи {task_id} (файл: {task_path})")
             
             # Подготовка изображения
             task_path = self._change_path(task_path)
@@ -272,22 +280,22 @@ class YoloAutoLabel:
             
             # Обработка bbox
             bbox_classes_scores = Bbox.from_yolo_results(predictions)
-            logger.info(f"Получено {len(bbox_classes_scores)} предсказаний для задачи {task_id}")
+            self.logger.info(f"Получено {len(bbox_classes_scores)} предсказаний для задачи {task_id}")
             
             # Конвертация в формат Label Studio
             ls_results = [bbox.to_label_studio(image_sizes) for bbox in bbox_classes_scores]
-            logger.info(f"Сконвертировано в формат Label Studio")
+            self.logger.info(f"Сконвертировано в формат Label Studio")
 
             # Загрузка результатов
             if not upload_as_annotations:
                 scores = [bbox.score for bbox in bbox_classes_scores]
                 for annotation, score in zip(ls_results, scores):
                     self.client.predictions.create(task=task_id, result=annotation, score=score)
-                logger.info(f"Загружено {len(ls_results)} предсказаний для задачи {task_id}")
+                self.logger.info(f"Загружено {len(ls_results)} предсказаний для задачи {task_id}")
             else:
                 for annotation in ls_results:
                     self.client.annotations.create(id=task_id, result=annotation, was_cancelled=False)
-                logger.info(f"Загружено {len(ls_results)} аннотаций для задачи {task_id}")
+                self.logger.info(f"Загружено {len(ls_results)} аннотаций для задачи {task_id}")
 
 
 

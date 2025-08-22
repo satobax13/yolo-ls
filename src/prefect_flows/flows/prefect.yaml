@@ -2,11 +2,19 @@ version: 2.7
 
 
 deployments:
- - name: create_project1
-   entrypoint: /app/src/prefect_flows/flows/yolo_auto_label/example_run.py:yolo_autolabel_flow
-   work_pool:
-     name: ls_autolabel
-     work_queue_name: default
-   version: "0.1"
-   description: Create new LS project and upload images
-   enforce_parameter_schema: true
+- name: create_project
+  entrypoint: /app/src/prefect_flows/flows/yolo_auto_label/example_run.py:yolo_autolabel_flow
+  work_pool:
+    name: ls_autolabel
+    work_queue_name: default
+    job_variables: {
+        "env": {
+              "PROJECT_NAME": "yolo_proj",
+              "MODEL_NAME": "yolov8n.pt",
+              "UPLOAD_AS_ANNOTATIONS": "True",
+              "HOST_LOCAL_STORAGE_PATH": "/yolo/"
+      }
+    }
+  version: "0.1"
+  description: Create new LS project and upload images
+  enforce_parameter_schema: true
