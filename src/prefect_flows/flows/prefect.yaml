@@ -9,10 +9,10 @@ deployments:
     work_queue_name: default
     job_variables: {
         "env": {
-              "PROJECT_NAME": "yolo_proj",
+              "PROJECT_NAME": "",
               "MODEL_NAME": "yolov8n.pt",
               "UPLOAD_AS_ANNOTATIONS": "True",
-              "HOST_LOCAL_STORAGE_PATH": "/yolo/"
+              "HOST_LOCAL_STORAGE_PATH": ""
       }
     }
   version: "0.1"
